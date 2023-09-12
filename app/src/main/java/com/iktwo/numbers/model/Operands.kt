@@ -1,14 +1,16 @@
-package com.iktwo.numbers
+package com.iktwo.numbers.model
 
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.iktwo.numbers.NumberVault
 
 data class Operands(
     val numbers: List<Int>,
     val fontSizes: List<Dp>,
     val alignments: List<TextAlign>
 ) {
+    val sum = numbers.reduce { acc, number -> acc + number }
     companion object {
         fun build(size: Int = 7): Operands {
             return Operands(

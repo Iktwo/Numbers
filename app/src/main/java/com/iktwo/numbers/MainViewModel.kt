@@ -13,10 +13,9 @@ import com.google.mlkit.vision.digitalink.DigitalInkRecognizerOptions
 import com.google.mlkit.vision.digitalink.Ink
 import com.google.mlkit.vision.digitalink.RecognitionContext
 import com.google.mlkit.vision.digitalink.RecognitionResult
-
-enum class ModelState {
-    READY, DOWNLOADING, ERROR
-}
+import com.iktwo.numbers.model.InputState
+import com.iktwo.numbers.model.ModelState
+import com.iktwo.numbers.model.Operands
 
 class MainViewModel : ViewModel() {
     val modelDownloadState: LiveData<ModelState>
@@ -25,14 +24,14 @@ class MainViewModel : ViewModel() {
     val numbersToSum: LiveData<Operands>
         get() = _numbersToSum
 
-    val lastInput: LiveData<Int?>
-        get() = _lastInput
+    val inputState: LiveData<InputState>
+        get() = _inputState
 
     private val _modelDownloadState = MutableLiveData(ModelState.DOWNLOADING)
 
-    private val _numbersToSum = MutableLiveData(Operands.build(7))
+    private val _numbersToSum = MutableLiveData(Operands.build(5))
 
-    private val _lastInput = MutableLiveData<Int?>(null)
+    private val _inputState = MutableLiveData(InputState.READY_FOR_INPUT)
 
     private val regexDigits = Regex("^[0-9]*\$")
 
@@ -50,6 +49,16 @@ class MainViewModel : ViewModel() {
     //endregion
 
     init {
+        remoteModelManager.isModelDownloaded(recognitionModel).addOnSuccessListener { downloaded ->
+            if (!downloaded) {
+                downloadModel()
+            } else {
+                _modelDownloadState.postValue(ModelState.READY)
+            }
+        }
+    }
+
+    private fun downloadModel() {
         remoteModelManager.download(recognitionModel, DownloadConditions.Builder().build())
             .addOnSuccessListener {
                 _modelDownloadState.postValue(ModelState.READY)
@@ -67,11 +76,18 @@ class MainViewModel : ViewModel() {
                 }?.text?.let {
                     try {
                         val number = it.trim().toInt()
-                        _lastInput.postValue(number)
+
+                        if (number == _numbersToSum.value?.sum) {
+                            // TODO: send event that shows it was correct, that should also clear the input
+                            _inputState.postValue(InputState.READY_FOR_INPUT)
+
+                            _numbersToSum.postValue(Operands.build(5))
+                        } else {
+                            _inputState.postValue(InputState.INCORRECT)
+                        }
                     } catch (e: NumberFormatException) {
                         // Not an integer
                         Log.e(MainViewModel::class.simpleName, "Couldn't parse number")
-                        _lastInput.postValue(null)
                     }
                 }
             }.addOnFailureListener { e: Exception ->

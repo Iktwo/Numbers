@@ -23,7 +23,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.iktwo.numbers.model.InputState
+import com.iktwo.numbers.model.ModelState
+import com.iktwo.numbers.ui.elements.DrawingArea
 import com.iktwo.numbers.ui.theme.NumbersTheme
+import com.iktwo.numbers.ui.theme.Orange
 import com.iktwo.numbers.ui.theme.Padding
 import com.iktwo.numbers.ui.theme.PaddingLarge
 
@@ -42,12 +46,14 @@ class GameActivity : ComponentActivity() {
                     val modelState =
                         viewModel.modelDownloadState.observeAsState(ModelState.DOWNLOADING)
 
+                    val inputState = viewModel.inputState.observeAsState(InputState.READY_FOR_INPUT)
+
                     Column(modifier = Modifier.fillMaxSize()) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(65f)
-                                .background(Color.Gray)
+                                .background(if (inputState.value == InputState.INCORRECT) Orange else Color.Gray)
                                 .padding(Padding)
                         ) {
                             viewModel.numbersToSum.value?.let { (numbers, fonts, aligments) ->
@@ -70,14 +76,6 @@ class GameActivity : ComponentActivity() {
                             viewModel.recognize(it)
                         }
                     }
-
-                    Text(
-                        text = viewModel.lastInput.observeAsState().value.toString(),
-                        modifier = Modifier.fillMaxWidth(),
-                        color = Color.Red,
-                        textAlign = TextAlign.Center,
-                        fontSize = 24.sp
-                    )
 
                     //region ModelState
                     when (modelState.value) {
@@ -114,7 +112,11 @@ class GameActivity : ComponentActivity() {
                         }
 
                         ModelState.ERROR -> {
-                            Box(modifier = Modifier.fillMaxSize()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black)
+                            ) {
                                 Text(
                                     // TODO: move this to resources and translate
                                     text = "There was a problem loading the model. Check your internet connectivity and try again.",

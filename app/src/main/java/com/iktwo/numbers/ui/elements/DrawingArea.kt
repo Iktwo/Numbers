@@ -1,4 +1,4 @@
-package com.iktwo.numbers
+package com.iktwo.numbers.ui.elements
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -104,13 +104,15 @@ fun DrawingArea(modifier: Modifier, recognize: (Ink) -> Unit) {
                 }
 
                 MotionEvent.Move -> {
-                    path.quadraticBezierTo(
-                        previousPosition.x,
-                        previousPosition.y,
-                        (previousPosition.x + position.x) / 2,
-                        (previousPosition.y + position.y) / 2
+                    if (previousPosition != Offset.Unspecified) {
+                        path.quadraticBezierTo(
+                            previousPosition.x,
+                            previousPosition.y,
+                            (previousPosition.x + position.x) / 2,
+                            (previousPosition.y + position.y) / 2
 
-                    )
+                        )
+                    }
                     previousPosition = position
                 }
 
