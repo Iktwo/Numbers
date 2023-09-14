@@ -4,10 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,24 +22,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.google.mlkit.vision.digitalink.Ink
 import com.iktwo.numbers.model.InputState
 import com.iktwo.numbers.model.ModelState
 import com.iktwo.numbers.ui.elements.DrawingArea
 import com.iktwo.numbers.ui.elements.DrawingAreaHandler
+import com.iktwo.numbers.ui.elements.ResultBadge
 import com.iktwo.numbers.ui.theme.LocalColors
 import com.iktwo.numbers.ui.theme.NumbersTheme
 import com.iktwo.numbers.ui.theme.Padding
 import com.iktwo.numbers.ui.theme.PaddingLarge
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalAnimationApi::class)
 class GameActivity : ComponentActivity() {
@@ -125,7 +118,6 @@ class GameActivity : ComponentActivity() {
                                 ) {
                                     Text(
                                         text = getString(R.string.initializing_model),
-                                        // TODO: reference colors from theme
                                         color = MaterialTheme.colorScheme.onSurface,
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier
@@ -150,7 +142,7 @@ class GameActivity : ComponentActivity() {
                             ) {
                                 Text(
                                     text = getString(R.string.problem_loading_model),
-                                    color = Color(0xFFa52a2a),
+                                    color = LocalColors.current.inputFailureColor,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(Padding)
@@ -178,38 +170,9 @@ class GameActivity : ComponentActivity() {
                         }
                     }
 
-                    val density = LocalDensity.current
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ) {
-                        AnimatedVisibility(
-                            visible = uiState.inputState == InputState.CORRECT,
-                            enter = slideInVertically {
-                                with(density) {
-                                    -100.dp.roundToPx()
-                                }
-                            } + fadeIn(initialAlpha = 0f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = "+1",
-                                    fontSize = 64.sp,
-                                    modifier = Modifier
-                                        .align(Center)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.surface)
-                                )
-                            }
-
-                            if (transition.currentState == transition.targetState) {
-                                LaunchedEffect(Unit) {
-                                    viewModel.generateNewBoard()
-                                }
-                            }
+                    ResultBadge(inputState = uiState.inputState) {
+                        LaunchedEffect(Unit) {
+                            viewModel.generateNewBoard()
                         }
                     }
                 }
