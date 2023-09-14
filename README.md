@@ -9,9 +9,7 @@ The model used is capable of recognizing latin characters. At the time the digit
 
 The application can work offline after the model is downloaded.
 
-![Gameplay](screenshots/screenshot_1.png)
-
-![Gameplay](screenshots/screenshot_2.png)
+![Gameplay](screenshots/gameplay.gif)
 
 ## Status:
 
