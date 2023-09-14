@@ -9,7 +9,10 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -18,13 +21,17 @@ import androidx.core.view.WindowCompat
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
-    tertiary = Pink80
+    tertiary = Pink80,
+    surface = DarkGray100,
+    onSurface = Gray100
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
-    tertiary = Pink40
+    tertiary = Pink40,
+    surface = White50,
+    onSurface = DarkGray100
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -36,6 +43,15 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1C1B1F),
     */
 )
+
+// Default to Dark
+data class Colors(
+    val inputSuccessColor: Color = Green100,
+    val inputFailureColor: Color = Orange100,
+    val inputReadyColor: Color = Gray100
+)
+
+val LocalColors = compositionLocalOf { Colors() }
 
 @Composable
 fun NumbersTheme(
@@ -62,9 +78,21 @@ fun NumbersTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    val colors = if (isSystemInDarkTheme()) {
+        Colors()
+    } else {
+        Colors(
+            inputSuccessColor = Green50,
+            inputFailureColor = Orange50,
+            inputReadyColor = Gray50
+        )
+    }
+
+    CompositionLocalProvider(LocalColors provides colors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }

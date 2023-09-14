@@ -11,12 +11,12 @@ data class Operands(
     val alignments: List<TextAlign>
 ) {
     val sum = numbers.reduce { acc, number -> acc + number }
+
     companion object {
         fun build(size: Int = 7): Operands {
             return Operands(
                 numbers = NumberVault.randomList(size, 1, 9),
-                // TODO: figure out whatever font sizes make sense. Normally would use SP, but we don't want this to respect system settings ;)
-                fontSizes = NumberVault.randomList(size, 16, 64).map { it.dp },
+                fontSizes = NumberVault.randomList(size, 16, 120).map { it.dp },
                 alignments = NumberVault.randomList(size, 1, 3).map {
                     when (it) {
                         1 -> {

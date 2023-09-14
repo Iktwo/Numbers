@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,15 +24,25 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.google.mlkit.vision.digitalink.Ink
+import com.iktwo.numbers.R
+import com.iktwo.numbers.model.InputState
 import com.iktwo.numbers.ui.theme.Padding
 import com.smarttoolfactory.gesture.MotionEvent
 import com.smarttoolfactory.gesture.pointerMotionEvents
 
+interface DrawingAreaHandler {
+    val inputState: InputState
+
+    fun recognize(ink: Ink)
+
+}
+
 // Based on Thracian - https://stackoverflow.com/a/71090112
 @Composable
-fun DrawingArea(modifier: Modifier, recognize: (Ink) -> Unit) {
+fun DrawingArea(modifier: Modifier, handler: DrawingAreaHandler) {
     var inkBuilder by remember {
         mutableStateOf(Ink.builder())
     }
@@ -86,7 +97,7 @@ fun DrawingArea(modifier: Modifier, recognize: (Ink) -> Unit) {
             val ink = inkBuilder.build()
 
             if (ink.strokes.isNotEmpty()) {
-                recognize(ink)
+                handler.recognize(ink)
             }
 
             pointerInputChange.consume()
@@ -94,6 +105,15 @@ fun DrawingArea(modifier: Modifier, recognize: (Ink) -> Unit) {
         )
 
     Box(modifier) {
+        fun erase() {
+            path = Path()
+            strokeBuilder = Ink.Stroke.builder()
+            inkBuilder = Ink.Builder()
+            position = Offset.Unspecified
+            previousPosition = Offset.Unspecified
+            motionEvent = MotionEvent.Idle
+        }
+
         Canvas(
             modifier = canvasModifier.fillMaxSize()
         ) {
@@ -137,13 +157,15 @@ fun DrawingArea(modifier: Modifier, recognize: (Ink) -> Unit) {
             .align(TopCenter)
             .padding(Padding),
             onClick = {
-                path = Path()
-                strokeBuilder = Ink.Stroke.builder()
-                inkBuilder = Ink.Builder()
+                erase()
             }) {
+            Text(text = stringResource(R.string.erase))
+        }
 
-            // TODO: move this to resources and translate
-            Text(text = "Erase")
+        LaunchedEffect(handler.inputState) {
+            if (handler.inputState == InputState.CORRECT) {
+                erase()
+            }
         }
     }
 }

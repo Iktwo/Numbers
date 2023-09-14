@@ -1,9 +1,8 @@
 package com.iktwo.numbers
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.common.model.RemoteModelManager
 import com.google.mlkit.vision.digitalink.DigitalInkRecognition
@@ -16,22 +15,26 @@ import com.google.mlkit.vision.digitalink.RecognitionResult
 import com.iktwo.numbers.model.InputState
 import com.iktwo.numbers.model.ModelState
 import com.iktwo.numbers.model.Operands
+import com.iktwo.numbers.model.SumGameUIState
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
-    val modelDownloadState: LiveData<ModelState>
-        get() = _modelDownloadState
+    private val amountOfOperands = 1
 
-    val numbersToSum: LiveData<Operands>
-        get() = _numbersToSum
-
-    val inputState: LiveData<InputState>
-        get() = _inputState
-
-    private val _modelDownloadState = MutableLiveData(ModelState.DOWNLOADING)
-
-    private val _numbersToSum = MutableLiveData(Operands.build(5))
-
-    private val _inputState = MutableLiveData(InputState.READY_FOR_INPUT)
+    private val _uiState = MutableStateFlow(
+        SumGameUIState(
+            inputState = InputState.READY_FOR_INPUT,
+            modelState = ModelState.READY,
+            operands = Operands.build(amountOfOperands)
+        )
+    )
+    val uiState: StateFlow<SumGameUIState> = _uiState.asStateFlow()
 
     private val regexDigits = Regex("^[0-9]*\$")
 
@@ -48,12 +51,21 @@ class MainViewModel : ViewModel() {
     )
     //endregion
 
+    private var recognitionJob: Job? = null
+    private var lastRecognizedInput: Int? = null
+
     init {
         remoteModelManager.isModelDownloaded(recognitionModel).addOnSuccessListener { downloaded ->
             if (!downloaded) {
+                _uiState.update { state ->
+                    state.copy(modelState = ModelState.DOWNLOADING)
+                }
+
                 downloadModel()
             } else {
-                _modelDownloadState.postValue(ModelState.READY)
+                _uiState.update { state ->
+                    state.copy(modelState = ModelState.READY)
+                }
             }
         }
     }
@@ -61,10 +73,15 @@ class MainViewModel : ViewModel() {
     private fun downloadModel() {
         remoteModelManager.download(recognitionModel, DownloadConditions.Builder().build())
             .addOnSuccessListener {
-                _modelDownloadState.postValue(ModelState.READY)
+                _uiState.update { state ->
+                    state.copy(modelState = ModelState.READY)
+                }
             }.addOnFailureListener { e: Exception ->
                 Log.e(MainViewModel::class.simpleName, "Error fetching model: $e")
-                _modelDownloadState.postValue(ModelState.ERROR)
+
+                _uiState.update { state ->
+                    state.copy(modelState = ModelState.ERROR)
+                }
             }
     }
 
@@ -76,22 +93,61 @@ class MainViewModel : ViewModel() {
                 }?.text?.let {
                     try {
                         val number = it.trim().toInt()
+                        lastRecognizedInput = number
 
-                        if (number == _numbersToSum.value?.sum) {
-                            // TODO: send event that shows it was correct, that should also clear the input
-                            _inputState.postValue(InputState.READY_FOR_INPUT)
+                        recognitionJob?.cancel()
 
-                            _numbersToSum.postValue(Operands.build(5))
+                        if (isLastInputCorrect()) {
+                            _uiState.update { state ->
+                                state.copy(inputState = InputState.CORRECT)
+                            }
                         } else {
-                            _inputState.postValue(InputState.INCORRECT)
+                            delayPossiblyIncorrectCheck(
+                                if (lastRecognizedInput.toString().length < _uiState.value.operands.sum.toString().length)
+                                    1250
+                                else
+                                    550
+                            )
                         }
                     } catch (e: NumberFormatException) {
                         // Not an integer
                         Log.e(MainViewModel::class.simpleName, "Couldn't parse number")
+                        lastRecognizedInput = null
                     }
                 }
             }.addOnFailureListener { e: Exception ->
                 Log.e(MainViewModel::class.simpleName, "Error during recognition: $e")
             }
+    }
+
+    private fun delayPossiblyIncorrectCheck(delayInMS: Long = 550) {
+        if (lastRecognizedInput == null) {
+            return
+        }
+
+        recognitionJob?.cancel()
+        recognitionJob = viewModelScope.launch {
+            delay(delayInMS)
+
+            _uiState.update { state ->
+                state.copy(inputState = InputState.INCORRECT)
+            }
+        }
+    }
+
+    private fun isLastInputCorrect(): Boolean {
+        return lastRecognizedInput == uiState.value.operands.sum
+    }
+
+    fun generateNewBoard() {
+        lastRecognizedInput = null
+        recognitionJob?.cancel()
+
+        _uiState.update {
+            it.copy(
+                operands = Operands.build(amountOfOperands),
+                inputState = InputState.READY_FOR_INPUT
+            )
+        }
     }
 }

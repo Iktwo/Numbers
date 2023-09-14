@@ -15,8 +15,9 @@ The application can work offline after the model is downloaded.
 
 ## Status:
 
-    The game isn't playable yet.
-
 * Handwriting recognition works.
-* The "board" is generated, although it doesn't look great.
+* The "board" is generated.
+* Correct answers are detected and a new set of numbers appear.
+* Incorrect answers are detected.
+* There is no score and/or timer.
 * There should be a countdown to get started and some logic to allow a short period of time to erase anything that was recognized incorrectly.

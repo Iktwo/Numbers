@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,26 +15,37 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.mlkit.vision.digitalink.Ink
 import com.iktwo.numbers.model.InputState
 import com.iktwo.numbers.model.ModelState
 import com.iktwo.numbers.ui.elements.DrawingArea
+import com.iktwo.numbers.ui.elements.DrawingAreaHandler
+import com.iktwo.numbers.ui.theme.LocalColors
 import com.iktwo.numbers.ui.theme.NumbersTheme
-import com.iktwo.numbers.ui.theme.Orange
 import com.iktwo.numbers.ui.theme.Padding
 import com.iktwo.numbers.ui.theme.PaddingLarge
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalAnimationApi::class)
 class GameActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
@@ -43,25 +58,36 @@ class GameActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val modelState =
-                        viewModel.modelDownloadState.observeAsState(ModelState.DOWNLOADING)
-
-                    val inputState = viewModel.inputState.observeAsState(InputState.READY_FOR_INPUT)
+                    val uiState by viewModel.uiState.collectAsState()
 
                     Column(modifier = Modifier.fillMaxSize()) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(65f)
-                                .background(if (inputState.value == InputState.INCORRECT) Orange else Color.Gray)
+                                .background(
+                                    when (uiState.inputState) {
+                                        InputState.READY_FOR_INPUT -> {
+                                            LocalColors.current.inputReadyColor
+                                        }
+
+                                        InputState.INCORRECT -> {
+                                            LocalColors.current.inputFailureColor
+                                        }
+
+                                        InputState.CORRECT -> {
+                                            LocalColors.current.inputSuccessColor
+                                        }
+                                    }
+                                )
                                 .padding(Padding)
                         ) {
-                            viewModel.numbersToSum.value?.let { (numbers, fonts, aligments) ->
+                            uiState.operands.let { (numbers, fonts, alignments) ->
                                 numbers.forEachIndexed { index, number ->
                                     Text(
                                         text = "$number",
                                         fontSize = with(LocalDensity.current) { fonts[index].toSp() },
-                                        textAlign = aligments[index],
+                                        textAlign = alignments[index],
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
@@ -71,31 +97,36 @@ class GameActivity : ComponentActivity() {
                         DrawingArea(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(35f)
-                        ) {
-                            viewModel.recognize(it)
-                        }
+                                .weight(35f),
+                            handler = object : DrawingAreaHandler {
+                                override val inputState: InputState
+                                    get() = uiState.inputState
+
+                                override fun recognize(ink: Ink) {
+                                    viewModel.recognize(ink)
+                                }
+                            }
+                        )
                     }
 
                     //region ModelState
-                    when (modelState.value) {
+                    when (uiState.modelState) {
                         ModelState.DOWNLOADING -> {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(Color(0xCC000000))
+                                    .background(MaterialTheme.colorScheme.surface)
                             ) {
                                 Column(
-                                    modifier = Modifier.align(Alignment.Center),
+                                    modifier = Modifier.align(Center),
                                     verticalArrangement = Arrangement.spacedBy(
                                         PaddingLarge
                                     )
                                 ) {
-                                    // TODO: move this to resources and translate
                                     Text(
-                                        text = "Initializing model",
+                                        text = getString(R.string.initializing_model),
                                         // TODO: reference colors from theme
-                                        color = Color.White,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -118,13 +149,12 @@ class GameActivity : ComponentActivity() {
                                     .background(Color.Black)
                             ) {
                                 Text(
-                                    // TODO: move this to resources and translate
-                                    text = "There was a problem loading the model. Check your internet connectivity and try again.",
+                                    text = getString(R.string.problem_loading_model),
                                     color = Color(0xFFa52a2a),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(Padding)
-                                        .align(Alignment.Center)
+                                        .align(Center)
                                 )
                             }
                         }
@@ -132,6 +162,56 @@ class GameActivity : ComponentActivity() {
                         ModelState.READY -> {}
                     }
                     //endregion
+
+                    val haptic = LocalHapticFeedback.current
+                    when (uiState.inputState) {
+                        InputState.READY_FOR_INPUT -> {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+
+                        InputState.INCORRECT -> {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+
+                        InputState.CORRECT -> {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+                    }
+
+                    val density = LocalDensity.current
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        AnimatedVisibility(
+                            visible = uiState.inputState == InputState.CORRECT,
+                            enter = slideInVertically {
+                                with(density) {
+                                    -100.dp.roundToPx()
+                                }
+                            } + fadeIn(initialAlpha = 0f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "+1",
+                                    fontSize = 64.sp,
+                                    modifier = Modifier
+                                        .align(Center)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.surface)
+                                )
+                            }
+
+                            if (transition.currentState == transition.targetState) {
+                                LaunchedEffect(Unit) {
+                                    viewModel.generateNewBoard()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

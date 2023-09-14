@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.digital.ink.recognition)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.junit)
 
