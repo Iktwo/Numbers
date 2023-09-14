@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
-    private val amountOfOperands = 1
+    private val amountOfOperands = 5
 
     private val _uiState = MutableStateFlow(
         SumGameUIState(
