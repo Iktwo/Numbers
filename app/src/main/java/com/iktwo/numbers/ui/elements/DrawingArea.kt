@@ -55,55 +55,6 @@ fun DrawingArea(modifier: Modifier, handler: DrawingAreaHandler) {
 
     var path by remember { mutableStateOf(Path()) }
 
-    val canvasModifier = Modifier
-        .fillMaxWidth()
-        .clipToBounds()
-        .background(Color.White)
-        .pointerMotionEvents(onDown = { pointerInputChange: PointerInputChange ->
-            position = pointerInputChange.position
-
-            strokeBuilder = Ink.Stroke.builder()
-            strokeBuilder.addPoint(
-                Ink.Point.create(
-                    position.x, position.y, System.currentTimeMillis()
-                )
-            )
-
-            motionEvent = MotionEvent.Down
-            pointerInputChange.consume()
-        }, onMove = { pointerInputChange: PointerInputChange ->
-            position = pointerInputChange.position
-            motionEvent = MotionEvent.Move
-
-            strokeBuilder.addPoint(
-                Ink.Point.create(
-                    position.x, position.y, System.currentTimeMillis()
-                )
-            )
-
-            pointerInputChange.consume()
-        }, onUp = { pointerInputChange: PointerInputChange ->
-            motionEvent = MotionEvent.Up
-            position = pointerInputChange.position
-
-            strokeBuilder.addPoint(
-                Ink.Point.create(
-                    position.x, position.y, System.currentTimeMillis()
-                )
-            )
-
-            inkBuilder.addStroke(strokeBuilder.build())
-
-            val ink = inkBuilder.build()
-
-            if (ink.strokes.isNotEmpty()) {
-                handler.recognize(ink)
-            }
-
-            pointerInputChange.consume()
-        }, delayAfterDownInMillis = 25L
-        )
-
     Box(modifier) {
         fun erase() {
             path = Path()
@@ -115,7 +66,55 @@ fun DrawingArea(modifier: Modifier, handler: DrawingAreaHandler) {
         }
 
         Canvas(
-            modifier = canvasModifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clipToBounds()
+                .background(Color.White)
+                .pointerMotionEvents(onDown = { pointerInputChange: PointerInputChange ->
+                    position = pointerInputChange.position
+
+                    strokeBuilder = Ink.Stroke.builder()
+                    strokeBuilder.addPoint(
+                        Ink.Point.create(
+                            position.x, position.y, System.currentTimeMillis()
+                        )
+                    )
+
+                    motionEvent = MotionEvent.Down
+                    pointerInputChange.consume()
+                }, onMove = { pointerInputChange: PointerInputChange ->
+                    position = pointerInputChange.position
+                    motionEvent = MotionEvent.Move
+
+                    strokeBuilder.addPoint(
+                        Ink.Point.create(
+                            position.x, position.y, System.currentTimeMillis()
+                        )
+                    )
+
+                    pointerInputChange.consume()
+                }, onUp = { pointerInputChange: PointerInputChange ->
+                    motionEvent = MotionEvent.Up
+                    position = pointerInputChange.position
+
+                    strokeBuilder.addPoint(
+                        Ink.Point.create(
+                            position.x, position.y, System.currentTimeMillis()
+                        )
+                    )
+
+                    inkBuilder.addStroke(strokeBuilder.build())
+
+                    val ink = inkBuilder.build()
+
+                    if (ink.strokes.isNotEmpty()) {
+                        handler.recognize(ink)
+                    }
+
+                    pointerInputChange.consume()
+                }, delayAfterDownInMillis = 25L
+                )
+                .fillMaxSize()
         ) {
             when (motionEvent) {
                 MotionEvent.Down -> {
@@ -132,6 +131,8 @@ fun DrawingArea(modifier: Modifier, handler: DrawingAreaHandler) {
                             (previousPosition.y + position.y) / 2
 
                         )
+                    } else {
+                        path.moveTo(position.x, position.y)
                     }
                     previousPosition = position
                 }
