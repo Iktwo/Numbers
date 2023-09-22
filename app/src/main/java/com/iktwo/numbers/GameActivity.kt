@@ -23,6 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.google.mlkit.vision.digitalink.Ink
 import com.iktwo.numbers.model.state.InputState
 import com.iktwo.numbers.model.state.ModelState
@@ -44,19 +47,24 @@ class GameActivity : ComponentActivity() {
 
         setContent {
             NumbersTheme {
+                val navController = rememberNavController()
+
                 val uiState by viewModel.uiState.collectAsState()
 
-                when (uiState.currentPage) {
-                    PageEntry.MAIN_MENU -> {
+                NavHost(
+                    navController = navController,
+                    startDestination = PageEntry.MAIN_MENU.name
+                ) {
+                    composable(PageEntry.MAIN_MENU.name) {
                         MainMenu(
                             backgroundColor = MaterialTheme.colorScheme.background,
                             entries = PageEntry.values().filter { it != PageEntry.MAIN_MENU }
                         ) {
-                            viewModel.navigate(it)
+                            viewModel.navigate(it, navController)
                         }
                     }
 
-                    PageEntry.SUMS -> {
+                    composable(PageEntry.SUMS.name) {
                         PageSums(
                             inputState = uiState.inputState,
                             operands = uiState.operands,
@@ -74,9 +82,17 @@ class GameActivity : ComponentActivity() {
                         )
                     }
 
-                    PageEntry.MULTIPLY -> TODO()
-                    PageEntry.TAP_SMALLEST -> TODO()
-                    PageEntry.TAP_LARGEST -> TODO()
+                    composable(PageEntry.MULTIPLY.name) {
+                        Text("Not ready yet")
+                    }
+
+                    composable(PageEntry.TAP_SMALLEST.name) {
+                        Text("Not ready yet")
+                    }
+
+                    composable(PageEntry.TAP_LARGEST.name) {
+                        Text("Not ready yet")
+                    }
                 }
 
                 //region ModelState

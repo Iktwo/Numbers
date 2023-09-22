@@ -14,6 +14,7 @@ junit = "4.13.2"
 kotlin = "1.8.10"
 kotlinx-coroutines-core = "1.7.3"
 lifecycle-runtime = "2.6.2"
+navigation = "2.7.3"
 runtime-livedata = "1.5.1"
 text-recognition = "16.0.0"
 
@@ -31,6 +32,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines-core" }
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-runtime" }
 material3 = { group = "androidx.compose.material3", name = "material3" }
+navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 ui = { group = "androidx.compose.ui", name = "ui" }
 ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }

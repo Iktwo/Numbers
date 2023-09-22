@@ -3,6 +3,7 @@ package com.iktwo.numbers.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.common.model.RemoteModelManager
 import com.google.mlkit.vision.digitalink.DigitalInkRecognition
@@ -32,8 +33,7 @@ class MainViewModel : ViewModel() {
         SumGameUIState(
             inputState = InputState.READY_FOR_INPUT,
             modelState = ModelState.READY,
-            operands = Operands.buildRandom(amountOfOperands),
-            currentPage = PageEntry.MAIN_MENU
+            operands = Operands.buildRandom(amountOfOperands)
         )
     )
     val uiState: StateFlow<SumGameUIState> = _uiState.asStateFlow()
@@ -153,13 +153,14 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun navigate(pageEntry: PageEntry) {
+    fun navigate(pageEntry: PageEntry, navController: NavController) {
         _uiState.update {
             it.copy(
-                currentPage = pageEntry,
                 operands = Operands.buildRandom(amountOfOperands),
                 inputState = InputState.READY_FOR_INPUT
             )
         }
+
+        navController.navigate(pageEntry.name)
     }
 }
