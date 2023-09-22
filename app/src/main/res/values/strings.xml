@@ -3,4 +3,9 @@
     <string name="erase">Erase</string>
     <string name="problem_loading_model">There was a problem loading the model. Check your internet connectivity and try again.</string>
     <string name="initializing_model">Initializing model</string>
+    <string name="main_menu">Main menu</string>
+    <string name="sum_them_all">Sum them all!</string>
+    <string name="multiply">Multiply</string>
+    <string name="tap_the_smallest_number">Tap the smallest number</string>
+    <string name="tap_the_largest_number">Tap the largest number</string>
 </resources>

@@ -18,7 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iktwo.numbers.model.InputState
+import com.iktwo.numbers.model.state.InputState
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable

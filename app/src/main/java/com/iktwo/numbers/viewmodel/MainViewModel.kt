@@ -1,4 +1,4 @@
-package com.iktwo.numbers
+package com.iktwo.numbers.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -12,10 +12,11 @@ import com.google.mlkit.vision.digitalink.DigitalInkRecognizerOptions
 import com.google.mlkit.vision.digitalink.Ink
 import com.google.mlkit.vision.digitalink.RecognitionContext
 import com.google.mlkit.vision.digitalink.RecognitionResult
-import com.iktwo.numbers.model.InputState
-import com.iktwo.numbers.model.ModelState
+import com.iktwo.numbers.model.state.InputState
+import com.iktwo.numbers.model.state.ModelState
 import com.iktwo.numbers.model.Operands
-import com.iktwo.numbers.model.SumGameUIState
+import com.iktwo.numbers.model.state.PageEntry
+import com.iktwo.numbers.model.uistate.SumGameUIState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +32,8 @@ class MainViewModel : ViewModel() {
         SumGameUIState(
             inputState = InputState.READY_FOR_INPUT,
             modelState = ModelState.READY,
-            operands = Operands.build(amountOfOperands)
+            operands = Operands.buildRandom(amountOfOperands),
+            currentPage = PageEntry.MAIN_MENU
         )
     )
     val uiState: StateFlow<SumGameUIState> = _uiState.asStateFlow()
@@ -145,7 +147,17 @@ class MainViewModel : ViewModel() {
 
         _uiState.update {
             it.copy(
-                operands = Operands.build(amountOfOperands),
+                operands = Operands.buildRandom(amountOfOperands),
+                inputState = InputState.READY_FOR_INPUT
+            )
+        }
+    }
+
+    fun navigate(pageEntry: PageEntry) {
+        _uiState.update {
+            it.copy(
+                currentPage = pageEntry,
+                operands = Operands.buildRandom(amountOfOperands),
                 inputState = InputState.READY_FOR_INPUT
             )
         }

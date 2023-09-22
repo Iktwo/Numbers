@@ -13,7 +13,7 @@ data class Operands(
     val sum = numbers.reduce { acc, number -> acc + number }
 
     companion object {
-        fun build(size: Int = 5): Operands {
+        fun buildRandom(size: Int = 5): Operands {
             return Operands(
                 numbers = NumberVault.randomList(size, 1, 9),
                 fontSizes = NumberVault.randomList(size, 16, 80).map { it.dp },

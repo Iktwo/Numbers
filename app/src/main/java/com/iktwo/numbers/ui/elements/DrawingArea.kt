@@ -28,7 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.google.mlkit.vision.digitalink.Ink
 import com.iktwo.numbers.R
-import com.iktwo.numbers.model.InputState
+import com.iktwo.numbers.model.state.InputState
 import com.iktwo.numbers.ui.theme.Padding
 import com.smarttoolfactory.gesture.MotionEvent
 import com.smarttoolfactory.gesture.pointerMotionEvents
