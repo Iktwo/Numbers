@@ -52,26 +52,27 @@ android {
 }
 
 dependencies {
-    implementation(libs.core.ktx)
-    implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)
-    implementation(platform(libs.compose.bom))
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.compose.extended.gestures)
+    implementation(libs.core.ktx)
+    implementation(libs.digital.ink.recognition)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.material3)
+    implementation(libs.navigation.compose)
     implementation(libs.ui)
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
-    implementation(libs.material3)
-    implementation(libs.compose.extended.gestures)
-    implementation(libs.digital.ink.recognition)
-    implementation(libs.androidx.lifecycle.viewmodel.ktx)
-    implementation(libs.androidx.runtime.livedata)
-    implementation(libs.kotlinx.coroutines.core)
+    implementation(platform(libs.compose.bom))
 
     testImplementation(libs.junit)
 
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.ui.test.junit4)
-    debugImplementation(libs.ui.tooling)
+    androidTestImplementation(platform(libs.compose.bom))
     debugImplementation(libs.ui.test.manifest)
+    debugImplementation(libs.ui.tooling)
 }
