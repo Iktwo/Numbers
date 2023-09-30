@@ -30,9 +30,11 @@ import com.google.mlkit.vision.digitalink.Ink
 import com.iktwo.numbers.model.state.InputState
 import com.iktwo.numbers.model.state.ModelState
 import com.iktwo.numbers.model.state.PageEntry
-import com.iktwo.numbers.ui.MainMenu
-import com.iktwo.numbers.ui.PageSums
 import com.iktwo.numbers.ui.elements.DrawingAreaHandler
+import com.iktwo.numbers.ui.pages.MainMenu
+import com.iktwo.numbers.ui.pages.PageMultiply
+import com.iktwo.numbers.ui.pages.PageSums
+import com.iktwo.numbers.ui.pages.PageTapOrdered
 import com.iktwo.numbers.ui.theme.LocalColors
 import com.iktwo.numbers.ui.theme.NumbersTheme
 import com.iktwo.numbers.ui.theme.Padding
@@ -49,7 +51,8 @@ class GameActivity : ComponentActivity() {
             NumbersTheme {
                 val navController = rememberNavController()
 
-                val uiState by viewModel.uiState.collectAsState()
+                val sumGameUIState by viewModel.sumGameUIStateFlow.collectAsState()
+                val mainMenuUIStateFlow by viewModel.mainMenuUIStateFlow.collectAsState()
 
                 NavHost(
                     navController = navController,
@@ -66,11 +69,11 @@ class GameActivity : ComponentActivity() {
 
                     composable(PageEntry.SUMS.name) {
                         PageSums(
-                            inputState = uiState.inputState,
-                            operands = uiState.operands,
+                            inputState = sumGameUIState.inputState,
+                            operands = sumGameUIState.operands,
                             drawingAreaHandler = object : DrawingAreaHandler {
                                 override val inputState: InputState
-                                    get() = uiState.inputState
+                                    get() = sumGameUIState.inputState
 
                                 override fun recognize(ink: Ink) {
                                     viewModel.recognize(ink)
@@ -83,20 +86,20 @@ class GameActivity : ComponentActivity() {
                     }
 
                     composable(PageEntry.MULTIPLY.name) {
-                        Text("Not ready yet")
+                        PageMultiply()
                     }
 
                     composable(PageEntry.TAP_SMALLEST.name) {
-                        Text("Not ready yet")
+                        PageTapOrdered(increasing = true)
                     }
 
                     composable(PageEntry.TAP_LARGEST.name) {
-                        Text("Not ready yet")
+                        PageTapOrdered(increasing = false)
                     }
                 }
 
                 //region ModelState
-                when (uiState.modelState) {
+                when (mainMenuUIStateFlow.modelState) {
                     ModelState.DOWNLOADING -> {
                         Box(
                             modifier = Modifier
@@ -149,7 +152,7 @@ class GameActivity : ComponentActivity() {
                 //endregion
 
                 val haptic = LocalHapticFeedback.current
-                when (uiState.inputState) {
+                when (sumGameUIState.inputState) {
                     InputState.READY_FOR_INPUT -> {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }

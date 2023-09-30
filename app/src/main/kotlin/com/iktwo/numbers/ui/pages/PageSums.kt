@@ -1,4 +1,4 @@
-package com.iktwo.numbers.ui
+package com.iktwo.numbers.ui.pages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -20,6 +20,7 @@ import com.iktwo.numbers.ui.elements.ResultBadge
 import com.iktwo.numbers.ui.theme.LocalColors
 import com.iktwo.numbers.ui.theme.Padding
 
+// TODO: build mechanism to track score
 @Composable
 fun PageSums(
     inputState: InputState,

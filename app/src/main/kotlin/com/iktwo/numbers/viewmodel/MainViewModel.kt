@@ -17,6 +17,7 @@ import com.iktwo.numbers.model.state.InputState
 import com.iktwo.numbers.model.state.ModelState
 import com.iktwo.numbers.model.Operands
 import com.iktwo.numbers.model.state.PageEntry
+import com.iktwo.numbers.model.uistate.MainMenuUIState
 import com.iktwo.numbers.model.uistate.SumGameUIState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,14 +30,18 @@ import kotlinx.coroutines.launch
 class MainViewModel : ViewModel() {
     private val amountOfOperands = 5
 
-    private val _uiState = MutableStateFlow(
+    private val _mainMenuUIStateFlow = MutableStateFlow(MainMenuUIState(modelState = ModelState.READY))
+
+    val mainMenuUIStateFlow: StateFlow<MainMenuUIState> = _mainMenuUIStateFlow
+
+    private val _sumGameUIStateFlow = MutableStateFlow(
         SumGameUIState(
             inputState = InputState.READY_FOR_INPUT,
-            modelState = ModelState.READY,
             operands = Operands.buildRandom(amountOfOperands)
         )
     )
-    val uiState: StateFlow<SumGameUIState> = _uiState.asStateFlow()
+
+    val sumGameUIStateFlow: StateFlow<SumGameUIState> = _sumGameUIStateFlow.asStateFlow()
 
     private val regexDigits = Regex("^[0-9]*\$")
 
@@ -59,13 +64,13 @@ class MainViewModel : ViewModel() {
     init {
         remoteModelManager.isModelDownloaded(recognitionModel).addOnSuccessListener { downloaded ->
             if (!downloaded) {
-                _uiState.update { state ->
+                _mainMenuUIStateFlow.update { state ->
                     state.copy(modelState = ModelState.DOWNLOADING)
                 }
 
                 downloadModel()
             } else {
-                _uiState.update { state ->
+                _mainMenuUIStateFlow.update { state ->
                     state.copy(modelState = ModelState.READY)
                 }
             }
@@ -75,13 +80,13 @@ class MainViewModel : ViewModel() {
     private fun downloadModel() {
         remoteModelManager.download(recognitionModel, DownloadConditions.Builder().build())
             .addOnSuccessListener {
-                _uiState.update { state ->
+                _mainMenuUIStateFlow.update { state ->
                     state.copy(modelState = ModelState.READY)
                 }
             }.addOnFailureListener { e: Exception ->
                 Log.e(MainViewModel::class.simpleName, "Error fetching model: $e")
 
-                _uiState.update { state ->
+                _mainMenuUIStateFlow.update { state ->
                     state.copy(modelState = ModelState.ERROR)
                 }
             }
@@ -100,12 +105,12 @@ class MainViewModel : ViewModel() {
                         recognitionJob?.cancel()
 
                         if (isLastInputCorrect()) {
-                            _uiState.update { state ->
+                            _sumGameUIStateFlow.update { state ->
                                 state.copy(inputState = InputState.CORRECT)
                             }
                         } else {
                             delayPossiblyIncorrectCheck(
-                                if (lastRecognizedInput.toString().length < _uiState.value.operands.sum.toString().length)
+                                if (lastRecognizedInput.toString().length < _sumGameUIStateFlow.value.operands.sum.toString().length)
                                     1250
                                 else
                                     550
@@ -131,21 +136,21 @@ class MainViewModel : ViewModel() {
         recognitionJob = viewModelScope.launch {
             delay(delayInMS)
 
-            _uiState.update { state ->
+            _sumGameUIStateFlow.update { state ->
                 state.copy(inputState = InputState.INCORRECT)
             }
         }
     }
 
     private fun isLastInputCorrect(): Boolean {
-        return lastRecognizedInput == uiState.value.operands.sum
+        return lastRecognizedInput == sumGameUIStateFlow.value.operands.sum
     }
 
     fun generateNewBoard() {
         lastRecognizedInput = null
         recognitionJob?.cancel()
 
-        _uiState.update {
+        _sumGameUIStateFlow.update {
             it.copy(
                 operands = Operands.buildRandom(amountOfOperands),
                 inputState = InputState.READY_FOR_INPUT
@@ -154,7 +159,7 @@ class MainViewModel : ViewModel() {
     }
 
     fun navigate(pageEntry: PageEntry, navController: NavController) {
-        _uiState.update {
+        _sumGameUIStateFlow.update {
             it.copy(
                 operands = Operands.buildRandom(amountOfOperands),
                 inputState = InputState.READY_FOR_INPUT

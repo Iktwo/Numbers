@@ -1,4 +1,4 @@
-package com.iktwo.numbers.ui
+package com.iktwo.numbers.ui.pages
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
